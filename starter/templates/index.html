@@ -2,22 +2,25 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sudoku Game</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <h1>Sudoku Game</h1>
-  <div id="sudoku-board"></div>
+  <main>
+    <div id="sudoku-board" role="grid" aria-label="Sudoku puzzle"></div>
+  </main>
   <div class="controls">
-    <button id="new-game">New Game</button>
-    <button id="check-solution">Check Solution</button>
+    <button id="new-game" type="button">New Game</button>
+    <button id="check-solution" type="button">Check Solution</button>
     <label for="difficulty">Difficulty</label>
     <select id="difficulty">
       <option value="Easy">Easy</option>
       <option value="Medium" selected>Medium</option>
       <option value="Hard">Hard</option>
     </select>
-    <span id="message"></span>
+    <span id="message" aria-live="polite"></span>
   </div>
   <section id="leaderboard" aria-labelledby="leaderboard-title">
     <h2 id="leaderboard-title">Top 10 Scores</h2>
