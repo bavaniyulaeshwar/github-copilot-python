@@ -39,14 +39,55 @@ def fill_board(board):
                 return False
     return True
 
+
+def count_solutions(board, limit=2):
+    solutions = 0
+
+    def search():
+        nonlocal solutions
+        if solutions >= limit:
+            return
+
+        for row in range(SIZE):
+            for col in range(SIZE):
+                if board[row][col] == EMPTY:
+                    for candidate in range(1, SIZE + 1):
+                        if is_safe(board, row, col, candidate):
+                            board[row][col] = candidate
+                            search()
+                            board[row][col] = EMPTY
+                    return
+
+        solutions += 1
+
+    search()
+    return solutions
+
+
+def has_unique_solution(board):
+    return count_solutions(board, limit=2) == 1
+
+
 def remove_cells(board, clues):
-    attempts = SIZE * SIZE - clues
-    while attempts > 0:
-        row = random.randrange(SIZE)
-        col = random.randrange(SIZE)
-        if board[row][col] != EMPTY:
-            board[row][col] = EMPTY
-            attempts -= 1
+    if not 0 <= clues <= SIZE * SIZE:
+        raise ValueError("clues must be between 0 and 81")
+
+    positions = [(row, col) for row in range(SIZE) for col in range(SIZE)]
+    random.shuffle(positions)
+    removed = 0
+
+    for row, col in positions:
+        if removed == SIZE * SIZE - clues:
+            break
+        value = board[row][col]
+        board[row][col] = EMPTY
+        if has_unique_solution(board):
+            removed += 1
+        else:
+            board[row][col] = value
+
+    if removed != SIZE * SIZE - clues:
+        raise ValueError("could not generate a uniquely solvable puzzle with this clue count")
 
 def generate_puzzle(clues=35):
     board = create_empty_board()

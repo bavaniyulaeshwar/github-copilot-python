@@ -83,3 +83,17 @@ button:hover {
     font-size: 16px;
     color: #d32f2f;
 }
+
+#leaderboard {
+    width: min(90%, 520px);
+    margin: 30px auto;
+    text-align: left;
+}
+
+#leaderboard h2 {
+    color: #333;
+}
+
+#leaderboard-list {
+    padding-left: 28px;
+}

@@ -1,6 +1,9 @@
 // Client-side rendering and interaction for the Flask-backed Sudoku
 const SIZE = 9;
 let puzzle = [];
+let gameStartedAt = null;
+let hintsUsed = 0;
+let gameCompleted = false;
 
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
@@ -51,10 +54,36 @@ async function newGame() {
   const res = await fetch('/new');
   const data = await res.json();
   renderPuzzle(data.puzzle);
+  gameStartedAt = Date.now();
+  hintsUsed = 0;
+  gameCompleted = false;
   document.getElementById('message').innerText = '';
 }
 
+function renderLeaderboard() {
+  const list = document.getElementById('leaderboard-list');
+  list.innerHTML = '';
+  SudokuLeaderboard.getScores(window.localStorage).forEach((score) => {
+    const item = document.createElement('li');
+    item.textContent = `${score.name} - ${score.completionTime}s - ${score.difficulty} - ${score.hintsUsed} hints`;
+    list.appendChild(item);
+  });
+}
+
+function saveCompletedGame() {
+  const name = window.prompt('Enter your name for the leaderboard:', 'Anonymous');
+  SudokuLeaderboard.addScore(window.localStorage, {
+    name,
+    completionTime: Math.floor((Date.now() - gameStartedAt) / 1000),
+    difficulty: document.getElementById('difficulty').value,
+    hintsUsed
+  });
+  renderLeaderboard();
+}
+
 async function checkSolution() {
+  if (gameCompleted) return;
+
   const boardDiv = document.getElementById('sudoku-board');
   const inputs = boardDiv.getElementsByTagName('input');
   const board = [];
@@ -88,8 +117,10 @@ async function checkSolution() {
     }
   }
   if (incorrect.size === 0) {
+    gameCompleted = true;
     msg.style.color = '#388e3c';
     msg.innerText = 'Congratulations! You solved it!';
+    saveCompletedGame();
   } else {
     msg.style.color = '#d32f2f';
     msg.innerText = 'Some cells are incorrect.';
@@ -100,6 +131,7 @@ async function checkSolution() {
 window.addEventListener('load', () => {
   document.getElementById('new-game').addEventListener('click', newGame);
   document.getElementById('check-solution').addEventListener('click', checkSolution);
+  renderLeaderboard();
   // initialize
   newGame();
 });
