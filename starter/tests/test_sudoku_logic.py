@@ -1,4 +1,5 @@
 import sudoku_logic
+from app import app, CURRENT
 
 
 def test_create_empty_board_has_expected_shape_and_values():
@@ -80,3 +81,35 @@ def test_generated_puzzles_have_exactly_one_solution():
         puzzle, _ = sudoku_logic.generate_puzzle(35)
 
         assert sudoku_logic.count_solutions(puzzle) == 1
+
+
+def test_hint_returns_first_empty_cell_and_correct_value():
+    solution = [
+        [5, 3, 4, 6, 7, 8, 9, 1, 2],
+        [6, 7, 2, 1, 9, 5, 3, 4, 8],
+        [1, 9, 8, 3, 4, 2, 5, 6, 7],
+        [8, 5, 9, 7, 6, 1, 4, 2, 3],
+        [4, 2, 6, 8, 5, 3, 7, 9, 1],
+        [7, 1, 3, 9, 2, 4, 8, 5, 6],
+        [9, 6, 1, 5, 3, 7, 2, 8, 4],
+        [2, 8, 7, 4, 1, 9, 6, 3, 5],
+        [3, 4, 5, 2, 8, 6, 1, 7, 9],
+    ]
+    CURRENT['solution'] = solution
+    board = [row[:] for row in solution]
+    board[0][0] = 0
+
+    response = app.test_client().post('/hint', json={'board': board})
+
+    assert response.status_code == 200
+    assert response.get_json() == {'row': 0, 'col': 0, 'value': 5}
+
+
+def test_hint_returns_no_cell_when_board_is_full():
+    solution = [[1 for _ in range(sudoku_logic.SIZE)] for _ in range(sudoku_logic.SIZE)]
+    CURRENT['solution'] = solution
+
+    response = app.test_client().post('/hint', json={'board': solution})
+
+    assert response.status_code == 200
+    assert response.get_json() == {'row': None, 'col': None, 'value': None}

@@ -1,5 +1,5 @@
 :root {
-    color-scheme: light dark;
+    color-scheme: light;
     --page-background: #f4f4f4;
     --text-color: #252525;
     --board-background: #ffffff;
@@ -17,24 +17,23 @@
     --message-success: #176b36;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --page-background: #1b1d1f;
-        --text-color: #f1f3f4;
-        --board-background: #25282b;
-        --cell-a: #29343a;
-        --cell-b: #354d5a;
-        --prefilled-a: #465058;
-        --prefilled-b: #557080;
-        --cell-border: #82909a;
-        --grid-border: #f1f3f4;
-        --focus-background: #176070;
-        --incorrect-background: #7f2932;
-        --button-background: #4ba3df;
-        --button-hover: #79bce9;
-        --message-error: #ff9b9b;
-        --message-success: #8ee0a7;
-    }
+:root.dark-mode {
+    color-scheme: dark;
+    --page-background: #1b1d1f;
+    --text-color: #f1f3f4;
+    --board-background: #25282b;
+    --cell-a: #29343a;
+    --cell-b: #354d5a;
+    --prefilled-a: #465058;
+    --prefilled-b: #557080;
+    --cell-border: #82909a;
+    --grid-border: #f1f3f4;
+    --focus-background: #176070;
+    --incorrect-background: #7f2932;
+    --button-background: #4ba3df;
+    --button-hover: #79bce9;
+    --message-error: #ff9b9b;
+    --message-success: #8ee0a7;
 }
 
 body {

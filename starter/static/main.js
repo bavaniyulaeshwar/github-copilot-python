@@ -55,13 +55,53 @@ function renderPuzzle(puz) {
   }
 }
 
+function getCurrentBoard() {
+  const inputs = document.getElementById('sudoku-board').getElementsByTagName('input');
+  const board = [];
+  for (let i = 0; i < SIZE; i++) {
+    board[i] = [];
+    for (let j = 0; j < SIZE; j++) {
+      const value = inputs[i * SIZE + j].value;
+      board[i][j] = value ? parseInt(value, 10) : 0;
+    }
+  }
+  return {board, inputs};
+}
+
+function updateHintsUsed() {
+  document.getElementById('hints-used').innerText = `Hints Used: ${hintsUsed}`;
+}
+
+function applyTheme(theme) {
+  const isDark = theme === 'dark';
+  document.documentElement.classList.toggle('dark-mode', isDark);
+  const toggle = document.getElementById('theme-toggle');
+  toggle.innerText = isDark ? 'Light Mode: On' : 'Dark Mode: Off';
+  toggle.setAttribute('aria-pressed', String(isDark));
+  window.localStorage.setItem('sudoku-theme', isDark ? 'dark' : 'light');
+}
+
+function initializeTheme() {
+  const savedTheme = window.localStorage.getItem('sudoku-theme');
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.contains('dark-mode');
+  applyTheme(isDark ? 'light' : 'dark');
+}
+
 async function newGame() {
-  const res = await fetch('/new');
+  const difficulty = document.getElementById('difficulty').value;
+  const res = await fetch(`/new?difficulty=${encodeURIComponent(difficulty)}`);
   const data = await res.json();
   renderPuzzle(data.puzzle);
   gameStartedAt = Date.now();
   hintsUsed = 0;
   gameCompleted = false;
+  updateHintsUsed();
+  document.getElementById('hint').disabled = false;
   document.getElementById('message').innerText = '';
 }
 
@@ -89,17 +129,7 @@ function saveCompletedGame() {
 async function checkSolution() {
   if (gameCompleted) return;
 
-  const boardDiv = document.getElementById('sudoku-board');
-  const inputs = boardDiv.getElementsByTagName('input');
-  const board = [];
-  for (let i = 0; i < SIZE; i++) {
-    board[i] = [];
-    for (let j = 0; j < SIZE; j++) {
-      const idx = i * SIZE + j;
-      const val = inputs[idx].value;
-      board[i][j] = val ? parseInt(val, 10) : 0;
-    }
-  }
+  const {board, inputs} = getCurrentBoard();
   const res = await fetch('/check', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -123,6 +153,7 @@ async function checkSolution() {
   }
   if (incorrect.size === 0) {
     gameCompleted = true;
+    document.getElementById('hint').disabled = true;
     msg.style.color = 'var(--message-success)';
     msg.innerText = 'Congratulations! You solved it!';
     saveCompletedGame();
@@ -132,10 +163,46 @@ async function checkSolution() {
   }
 }
 
+async function useHint() {
+  if (gameCompleted) return;
+
+  const {board, inputs} = getCurrentBoard();
+  const res = await fetch('/hint', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({board})
+  });
+  const data = await res.json();
+  const msg = document.getElementById('message');
+  if (data.error) {
+    msg.style.color = 'var(--message-error)';
+    msg.innerText = data.error;
+    return;
+  }
+
+  if (data.row === null || data.col === null) {
+    return;
+  }
+
+  const input = inputs[data.row * SIZE + data.col];
+  if (!input || input.disabled || input.value) {
+    return;
+  }
+
+  input.value = data.value;
+  input.disabled = true;
+  input.classList.add('prefilled');
+  hintsUsed += 1;
+  updateHintsUsed();
+}
+
 // Wire buttons
 window.addEventListener('load', () => {
   document.getElementById('new-game').addEventListener('click', newGame);
   document.getElementById('check-solution').addEventListener('click', checkSolution);
+  document.getElementById('hint').addEventListener('click', useHint);
+  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+  initializeTheme();
   renderLeaderboard();
   // initialize
   newGame();

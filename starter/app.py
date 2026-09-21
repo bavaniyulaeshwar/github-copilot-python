@@ -9,17 +9,49 @@ CURRENT = {
     'solution': None
 }
 
+DIFFICULTY_CLUES = {
+    'Easy': 45,
+    'Medium': 35,
+    'Hard': 25,
+}
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/new')
 def new_game():
-    clues = int(request.args.get('clues', 35))
+    difficulty = request.args.get('difficulty')
+    clues = DIFFICULTY_CLUES.get(difficulty, int(request.args.get('clues', 35)))
     puzzle, solution = sudoku_logic.generate_puzzle(clues)
     CURRENT['puzzle'] = puzzle
     CURRENT['solution'] = solution
     return jsonify({'puzzle': puzzle})
+
+
+@app.route('/hint', methods=['POST'])
+def give_hint():
+    data = request.json or {}
+    board = data.get('board')
+    solution = CURRENT.get('solution')
+    if solution is None:
+        return jsonify({'error': 'No game in progress'}), 400
+
+    if not isinstance(board, list) or len(board) != sudoku_logic.SIZE:
+        return jsonify({'error': 'Invalid board'}), 400
+
+    for row in range(sudoku_logic.SIZE):
+        if not isinstance(board[row], list) or len(board[row]) != sudoku_logic.SIZE:
+            return jsonify({'error': 'Invalid board'}), 400
+        for col in range(sudoku_logic.SIZE):
+            if board[row][col] in (0, None, ''):
+                return jsonify({
+                    'row': row,
+                    'col': col,
+                    'value': solution[row][col],
+                })
+
+    return jsonify({'row': None, 'col': None, 'value': None})
 
 @app.route('/check', methods=['POST'])
 def check_solution():
