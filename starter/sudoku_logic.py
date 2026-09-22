@@ -39,6 +39,46 @@ def fill_board(board):
                 return False
     return True
 
+# Copilot suggested adding extra validation for board dimensions,
+# row/column types, and 3x3 box values. I critically reviewed
+# the suggestion and adapted it to this project's existing SIZE
+# constant and Sudoku structure. I kept the useful validation
+# checks while avoiding changes to the existing solving behavior.
+
+def is_valid_solution(board):
+    expected = set(range(1, SIZE + 1))
+
+    if not isinstance(board, list) or len(board) != SIZE:
+        return False
+
+    if any(
+        not isinstance(row, list)
+        or len(row) != SIZE
+        or any(type(value) is not int or value not in expected for value in row)
+        for row in board
+    ):
+        return False
+
+    if any(set(row) != expected for row in board):
+        return False
+
+    if any(
+        {board[row][col] for row in range(SIZE)} != expected
+        for col in range(SIZE)
+    ):
+        return False
+
+    for start_row in range(0, SIZE, 3):
+        for start_col in range(0, SIZE, 3):
+            box = {
+                board[row][col]
+                for row in range(start_row, start_row + 3)
+                for col in range(start_col, start_col + 3)
+            }
+            if box != expected:
+                return False
+
+    return True
 
 def count_solutions(board, limit=2):
     solutions = 0
