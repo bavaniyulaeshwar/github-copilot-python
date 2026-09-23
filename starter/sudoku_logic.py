@@ -114,21 +114,38 @@ def remove_cells(board, clues):
 
     positions = [(row, col) for row in range(SIZE) for col in range(SIZE)]
     random.shuffle(positions)
-    removed = 0
 
-    for row, col in positions:
-        if removed == SIZE * SIZE - clues:
-            break
-        value = board[row][col]
-        board[row][col] = EMPTY
-        if has_unique_solution(board):
-            removed += 1
-        else:
+    target_removals = SIZE * SIZE - clues
+
+    def try_remove(index, removed):
+        if removed == target_removals:
+            return True
+
+        if len(positions) - index < target_removals - removed:
+            return False
+
+        for pos in range(index, len(positions)):
+            row, col = positions[pos]
+
+            if board[row][col] == EMPTY:
+                continue
+
+            value = board[row][col]
+            board[row][col] = EMPTY
+
+            if has_unique_solution(board):
+                if try_remove(pos + 1, removed + 1):
+                    return True
+
             board[row][col] = value
 
-    if removed != SIZE * SIZE - clues:
-        raise ValueError("could not generate a uniquely solvable puzzle with this clue count")
+        return False
 
+    if not try_remove(0, 0):
+        raise ValueError(
+            "could not generate a uniquely solvable puzzle with this clue count"
+        )
+    
 def generate_puzzle(clues=35):
     board = create_empty_board()
     fill_board(board)
