@@ -56,16 +56,27 @@ def give_hint():
 @app.route('/check', methods=['POST'])
 def check_solution():
     data = request.json
+
+    if not isinstance(data, dict):
+        return jsonify({'error': 'Invalid request'}), 400
+
     board = data.get('board')
     solution = CURRENT.get('solution')
+
     if solution is None:
         return jsonify({'error': 'No game in progress'}), 400
+
+    # Validate the submitted board before comparing it
+    if not sudoku_logic.is_valid_solution(board):
+        return jsonify({
+            'error': 'Invalid Sudoku solution'
+        }), 400
+
     incorrect = []
+
     for i in range(sudoku_logic.SIZE):
         for j in range(sudoku_logic.SIZE):
             if board[i][j] != solution[i][j]:
                 incorrect.append([i, j])
-    return jsonify({'incorrect': incorrect})
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    return jsonify({'incorrect': incorrect})
